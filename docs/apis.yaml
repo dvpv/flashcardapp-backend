@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+  title: Flashcard App Backend APIs
+  description:
+    Nodejs express backend APIs for the Flashcard App
+  version: 0.0.1
+
+servers:
+  - url: /api/v1
+
+tags:
+  - name: generate
+    description: Generate multiple question/answer pairs from a given text
+
+paths:
+  /generate:
+    get:
+      tags:
+        - generate
+      summary: Generate question/answer pairs from a text
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+      responses:
+        '200':
+          description: Return the Question/answer pairs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionAnswerPairs'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+
+components:
+  schemas:
+    GenerateRequest:
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          example: "Martinus was born to Byzantine Emperor Heraclius and Empress Martina, his second wife and niece, at an unknown date;[1] he was likely named after his mother.[2] Prior to taking the throne in 610, Heraclius had been married to Fabia Eudokia, with whom he had had a daughter, Eudoxia Epiphania, and a son, Constantine III. After she died in 612,[3][4] to further secure the succession, Heraclius remarried, wedding his niece Martina in either 613 or 623, with the latter date considered more likely. Although this marriage was very unpopular and offended the clergy, it was very fruitful.[4] The number and order of Heraclius's children by Martina is unsure, with sources estimating nine,[5] ten,[6] or eleven children.[7] Their first two sons were disabled and therefore unable to inherit, but Heraclonas was born healthy in 626, David Tiberius in 630, and Martinus at some later time. Constantine III was raised to co-emperor in 613 (aged 9 months), and Heraclonas in 638 (aged 12 years).[4] Martinus received the high courtly title nobilissimus under Heraclius, while his elder brother David was made caesar (a junior imperial title which placed him on the line of succession) on 4 July 638.[1][8][9] According to the Byzantine historian Nicephorus Gregoras, Martinus was also made caesar on the same day, but the later historian Emperor Constantine VII mentions only Tiberius.[8][10] A partially preserved papyrus letter known as SB VI 8986, and another papyrus document, CPR XXIII 35, shows that Martinus was definitely promoted to caesar at some point between 639 and 640, although the exact dating is debated: the German papyrologist who restored SB VI 8986, Fritz Mitthof [de], and the Byzantine historian Nikolaos Gonis argue for a date range between October 639 and September 640,[11][12] whereas Byzantine scholar Constantin Zuckerman argues for a range between 4 January 639 and 8 November 639.[12] According to the 7th-century historian John of Nikiu, Martinus and his brother David were involved in the banishment of Ecumenical Patriarch Pyrrhus of Constantinople (r. 638–641) to the Exarchate of Africa. However, the two princes were too young at the time to have taken an active role in any banishment and the account by John of Nikiu is so contradictory that no safe conclusions can be drawn from it."
+    ServerError:
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: 'ChatGPT Key is invalid'
+    QuestionAnswerPairs:
+        required:
+          - pairs
+        properties:
+          pairs:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuestionAnswerPair'
+    QuestionAnswerPair:
+      required:
+        - question
+        - answer
+      properties:
+        question:
+          type: string
+          example: 'Who was Martinus''s father?'
+        answer:
+          type: string
+          example: 'Heraclius'
