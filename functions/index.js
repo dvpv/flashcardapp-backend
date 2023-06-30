@@ -1,35 +1,59 @@
 const functions = require("firebase-functions");
+const admin = require("firebase-admin");
 const logger = require("firebase-functions/logger");
 const { GPTKEY } = require("./secrets.js");
 const axios = require("axios");
+const express = require("express");
 
-exports.api = functions.https.onRequest(app);
+admin.initializeApp();
+const app = express();
 
-exports.generate = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Unauthorized");
-  }
-
-  const { payload } = data;
-
-  try {
-    const parsedPayload = JSON.parse(payload);
-    if (!parsedPayload.text) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Invalid payload format"
-      );
-    }
-    logger.info(parsedPayload.text);
-
-    return await callGPT(parsedPayload.text);
-  } catch (error) {
+app.post("/generate", async (req, res) => {
+  const payload = req.body;
+  if (
+    !(
+      payload.key &&
+      payload.uid &&
+      (await validateAPIKey(payload.key, payload.uid))
+    )
+  ) {
     throw new functions.https.HttpsError(
-      "invalid-argument",
+      functions.https.HttpsError.UNAUTHENTICATED,
+      "Unauthorized request"
+    );
+  }
+  if (!payload.text) {
+    throw new functions.https.HttpsError(
+      functions.https.HttpsError.INVALID_ARGUMENT,
       "Invalid payload format"
     );
   }
+  logger.info(payload.text);
+
+  res.send(await callGPT(payload.text));
 });
+
+async function validateAPIKey(key, uid) {
+  realKeyDocument = await admin
+    .firestore()
+    .collection("apiKeys")
+    .doc(uid)
+    .get();
+  if (!realKeyDocument.exists) {
+    logger.info(`Document for ${uid} does not exist.`);
+    return false;
+  }
+  realKey = realKeyDocument.data().key;
+  if (!realKey) {
+    logger.info(`Document for ${uid} does not have a key.`);
+    return false;
+  }
+  if (key !== realKey) {
+    logger.info(`Key does not match.`);
+    return false;
+  }
+  return true;
+}
 
 async function callGPT(text) {
   logger.info(`callGPT with text: ${text}`);
@@ -74,3 +98,5 @@ async function callGPT(text) {
   logger.info(pairs);
   return pairs;
 }
+
+exports.api = functions.https.onRequest(app);
