@@ -22,7 +22,7 @@ app.post("/generate", async (req, res) => {
       "Unauthorized request"
     );
   }
-  if (!payload.text) {
+  if (!payload.text || !payload.questionCount) {
     throw new functions.https.HttpsError(
       functions.https.HttpsError.INVALID_ARGUMENT,
       "Invalid payload format"
@@ -30,7 +30,7 @@ app.post("/generate", async (req, res) => {
   }
   logger.info(payload.text);
 
-  res.send(await callGPT(payload.text));
+  res.send(await callGPT(payload.text, payload.questionCount));
 });
 
 async function validateAPIKey(key, uid) {
@@ -55,9 +55,8 @@ async function validateAPIKey(key, uid) {
   return true;
 }
 
-async function callGPT(text) {
+async function callGPT(text, numberOfQuestions) {
   logger.info(`callGPT with text: ${text}`);
-  const numberOfQuestions = 5;
   const query = `Give me ${numberOfQuestions} questions and answers based on the following text: "${text}". Please answer only with the questions in the following format:\nQ: {question}\nA: {answer}\n`;
 
   const GPTAPI = "https://api.openai.com/v1/chat/completions";
